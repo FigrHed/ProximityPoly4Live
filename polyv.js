@@ -2,7 +2,7 @@
 var numVoices = 0;
 var limit = 3;
 var voices;
-init();
+
 
 function voice(pitch,velocity) {
 	this.pitch = pitch;
@@ -11,6 +11,9 @@ function voice(pitch,velocity) {
         return "pitch: " + this.pitch + " Velocity: " + this.velocity;
     }
 }
+
+init();
+
 
 
 function init(){
@@ -32,9 +35,9 @@ function init(){
 //reset all voices
 function panic(){
     for(i=0;i<limit;i++){
-        outlet(i,voices[i].pitch,voices[i].velocity,i+1);
+        outlet(i,voices[i].pitch,voices[i].velocity);
     }
-
+    post("hey" + voices[0].pitch);
     init();
     
     numVoices = 0;
@@ -47,26 +50,42 @@ function assign(voiCe){
 			var dist;
 			min = 100;
 
-
+            //finds the closest active voice
 			for(i=0;i<limit;i++){
-				dist = Math.abs(voices[i][voices[i].length-1].pitch - voiCe.pitch);
-//				post("dist: " + dist);
-//				post();
-				distances.push(dist);
+                if(voices[i] != null){
+                    //post(voices[i][voices[]i.length-1].pitch);
+                    //post();
+                    //dist = Math.abs(voiCe.pitch - voices[i].pitch);
+                
+                    dist = Math.abs(voices[i][voices[i].length-1].pitch - voiCe.pitch);
+                
+                    //post("dist: " + dist);
+                    //post();
+                    if(!isNaN(dist)){
+                        distances.push(dist);
 				
-				if(distances[i] < min){
-					min = dist;
-					closestVoice = i;
-					
+                        if(distances[i] < min){
+                            min = dist;
+                            closestVoice = i;
+                        }
+                    }
 				}
 			}
-//			post("Closest Voice: " + closestVoice);
-//			post();
-//			post("Minimum: " + min);
-//			post();
+			//post("Closest Voice: " + closestVoice);
+			//post();
+			//post("Minimum: " + min);
+			//post();
 			min = Math.min(distances);
-			voices[closestVoice].push(voiCe);
+            
+			
+            voices[closestVoice].push(voiCe);
 			outlet(closestVoice,voiCe.pitch,voiCe.velocity);
+            if(voices[closestVoice].length > 1){
+                var turnOff = voices[closestVoice][voices[closestVoice].length-2]
+                outlet(closestVoice,turnOff.pitch,0);
+                //post("Turned off: " + turnOff.pitch);
+                //post();
+            }
 //			post("Turned on:",voiCe.pitch,"at",1);
 //			post();
 }
@@ -98,25 +117,42 @@ function list(){
         //if all spots are taken
 		if(numVoices > limit){
 			// assign based on proximity
-//input: voiCe
 			assign(voiCe);
 			
 		}	
 	} else {
 		//If note-off, remove from array
-		for(i=0;i<limit;i++){
-			for(j=0;j<voices[i].length;j++){
+        post("the voices array before:");
+        post();
+		for(var i=0;i<limit;i++){
+            
+            for(var j=0;j<voices[i].length;j++){
+			    post(j+" "+voices[i][j].pitch);
+                post();
 				if(voices[i][j].pitch == voiCe.pitch){
-					outlet(i,voiCe.pitch,0,i+1);
-					voices[i].splice(j,1);
-					numVoices--;
 					
+					
+					if(voices[i]. length > 1 && j == voices[i].length -1){
+                        outlet(i,voices[i][j-1].pitch,voices[i][j-1].velocity);
+                    }
+					outlet(i,voiCe.pitch,0);
 					//post("Turned Off voice",i+1);
 					//post();
 				}
+                voices[i] = voices[i].filter(function(item){
+                        return item.pitch !== voiCe.pitch;
+                });
 			}
 		}
-        
+        post("the voices array after:");
+        post();
+        for(var i=0;i<limit;i++){
+            for(var j=0;j<voices[i].length;j++){
+                post(j+" "+voices[i][j].pitch);
+                post();
+            }
+        }
+        numVoices--;
 	}
 //	for(i=0;i<3;i++){
 //		post("Voices ",i+1,"length:",voices[i].length);
@@ -125,6 +161,8 @@ function list(){
 //		}
 //		post();
 //	}
-	post("Number of Voices:",numVoices);
-	post();
+	//post("Number of Voices:",numVoices);
+    //post();
+    //post("voice1: " + voices[0].pitch);
+	//post();
 }
